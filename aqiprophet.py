@@ -6,6 +6,7 @@ Created on Mon Feb  6 03:26:47 2023
 """
 
 import neuralprophet as nph
+from neuralprophet import NeuralProphet
 # import plot_forecast
 import pandas as pd
 import numpy as np
@@ -31,7 +32,7 @@ new_df = df.drop(["month"],axis=1)
 final_df = df[["ds","y"]]
 print(new_df.dtypes)
 
-
+'''
 model = nph.NeuralProphet(
     n_lags=12,     # number of lagged values to use as inputs
     n_forecasts=24, # number of time steps to forecast
@@ -42,9 +43,11 @@ model = nph.NeuralProphet(
    
 )
 
+
 # fit the model to your data
 #model.fit(new_df, freq='Y')
-model.fit(new_df)
+#model.fit(new_df)
+#model.fit(new_df,freq='M',valid_p = 0.2)
 
 last_date = final_df['ds'].max()
 future = pd.DataFrame({
@@ -72,3 +75,30 @@ print(forecast[[]].head())
 model.plot(forecast)
 pyplot.show()
 print("qwe")
+'''
+
+
+df.info()
+new_df.info()
+
+m =NeuralProphet()
+df_train, df_val = m.split_df(new_df, freq='M', valid_p = 0.2)
+metrics = m.fit(df_train, freq='M', validation_df=df_val)
+
+future = m.make_future_dataframe(new_df, periods=24, n_historic_predictions=len(df))
+forecast = m.predict(future)
+
+fig_forecast = m.plot(forecast)
+fig_components = m.plot_components(forecast)
+
+fig_model = m.plot_parameters()
+
+fig, ax = plt.subplots(figsize=(20, 8))
+ax.plot(metrics["MAE"], '-o', label="Training Loss")  
+ax.plot(metrics["MAE_val"], '-r', label="Validation Loss")
+ax.legend(loc='center right', fontsize=16)
+ax.tick_params(axis='both', which='major', labelsize=20)
+ax.set_xlabel("Epoch", fontsize=28)
+ax.set_ylabel("Loss", fontsize=28)
+ax.set_title("Model Loss (MAE)", fontsize=28)
+
